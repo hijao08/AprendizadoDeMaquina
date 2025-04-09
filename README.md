@@ -13,3 +13,6 @@ pip install -r requirements.txt
 E por fim, para desativar o ambiente virtual:
 
 deactivate
+
+python3.12
+/usr/local/opt/python@3.12/bin/python3.12 -m venv ambiente_virtual
