@@ -17,3 +17,5 @@ packaging==24.2
 pillow==11.1.0
 pyparsing==3.2.3
 six==1.17.0
+xgboost==2.0.3
+scikit-optimize==0.9.0
