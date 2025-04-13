@@ -12,24 +12,16 @@ from exploratory_analysis import ExploratoryAnalysis
 from model_trainer import ModelTrainer
 from model_evaluator import ModelEvaluator
 
-# -------------------------------
-# 1. Carregar dados e filtrar N2O
-# -------------------------------
+#Carregar dados e filtrar N2O
 data_loader = DataLoader("./data/input/br_seeg_emissoes_brasil.csv")
 df_n2o = data_loader.load_data()
 
-# Garante a existência da pasta de saída
 os.makedirs("./data/output", exist_ok=True)
 
-# -----------------------------
-# 2. Tratamento de valores nulos e codificação
-# -----------------------------
 preprocessor = DataPreprocessor(df_n2o)
 df_n2o = preprocessor.preprocess()
 
-# -----------------------------
-# 3. Análise exploratória
-# -----------------------------
+# Análise exploratória
 exploratory_analysis = ExploratoryAnalysis(df_n2o)
 exploratory_analysis.analyze()
 
@@ -51,17 +43,12 @@ for categoria in categorias:
             plt.savefig(f"./data/output/frequencia_emissao_{categoria}_{nivel}.png")
             plt.close()
 
-# -----------------------------------
-# 4. Preparação dos dados para treino
-# -----------------------------------
 X = df_n2o.drop(columns=["emissao"])
 y = df_n2o["emissao"]
 
-# Normaliza os dados numéricos
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Separação treino/teste
 X_train, X_test, y_train, y_test = train_test_split(
     X_scaled, y, test_size=0.2, random_state=42
 )
@@ -70,22 +57,16 @@ trainer = ModelTrainer(X_train, y_train)
 best_model = trainer.train_xgboost()
 modelo_baseline = trainer.train_baseline()
 
-# -------------------------
-# 5. Avaliação dos Modelos
-# -------------------------
 evaluator = ModelEvaluator(X_test, y_test)
 mse_xgb = evaluator.evaluate(best_model, "XGBoost")
 mse_baseline = evaluator.evaluate(modelo_baseline, "Regressão Linear (Linha de Base)")
 evaluator.compare_models(mse_xgb, mse_baseline)
 
-# --------------------------
-# 7. Gerar CSV de resultado
-# --------------------------
+#Gerar CSV de resultado
 df_resultado = pd.DataFrame(X_test, columns=X.columns)
 df_resultado["emissao_real"] = y_test.values
 df_resultado["emissao_prevista"] = best_model.predict(X_test).round(2)
 
-# Reorganiza colunas colocando 'ano' primeiro se existir
 colunas = df_resultado.columns.tolist()
 colunas_ordenadas = [c for c in ["ano"] if c in colunas] + \
                     [c for c in colunas if c not in ["ano", "emissao_real", "emissao_prevista"]] + \
@@ -95,9 +76,7 @@ df_resultado = df_resultado[colunas_ordenadas]
 df_resultado.to_csv("./data/output/resultado_previsto.csv", index=False)
 print("📁 Arquivo 'resultado_previsto.csv' salvo com sucesso!")
 
-# --------------------------
-# 8. Gráfico real vs previsto
-# --------------------------
+#Gráfico real vs previsto
 plt.figure(figsize=(8, 5))
 plt.scatter(y_test, best_model.predict(X_test), alpha=0.5)
 plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--')
@@ -109,9 +88,7 @@ plt.tight_layout()
 plt.savefig("./data/output/real_vs_previsto.png")
 plt.close()
 
-# -------------------------------
-# 9. Feature Importance (Gráfico)
-# -------------------------------
+# Feature Importance (Gráfico)
 plt.figure(figsize=(12, 6))
 importances = best_model.feature_importances_
 indices = np.argsort(importances)[-20:]  # Top 20 features
