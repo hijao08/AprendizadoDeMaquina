@@ -1,0 +1,38 @@
+# Ambiente Virtual
+ambiente_virtual/
+
+# Arquivos de saída
+/data/output/
+
+# Arquivos do sistema
+__pycache__/
+*.py[cod]
+
+# Arquivos de configuração do editor
+.vscode/
+.idea/
+
+# Arquivos de log
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Arquivos de backup
+*.bak
+*.swp
+
+# Arquivos de cache
+.cache/
+
+# Arquivos de banco de dados
+*.db
+*.sqlite3
+
+# Arquivos de pacotes
+*.egg
+*.egg-info/
+dist/
+build/
+*.egg-info/ 

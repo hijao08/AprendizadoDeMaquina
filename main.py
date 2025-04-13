@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
+from sklearn.linear_model import LinearRegression
 
 # -------------------------------
 # 1. Carregar dados e filtrar N2O
@@ -102,12 +103,27 @@ X_train, X_test, y_train, y_test = train_test_split(
 modelo = XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42, verbosity=0)
 modelo.fit(X_train, y_train)
 
+# ----------------------
+# 5. Treinamento com Regressão Linear (Linha de Base)
+# ----------------------
+modelo_baseline = LinearRegression()
+modelo_baseline.fit(X_train, y_train)
+
 # -------------------------
 # 6. Previsão e avaliação
 # -------------------------
 y_pred = modelo.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 print(f"\n✅ MSE (erro quadrático médio) - XGBoost: {mse:.2f}")
+
+# Previsão e avaliação do modelo de linha de base
+y_pred_baseline = modelo_baseline.predict(X_test)
+mse_baseline = mean_squared_error(y_test, y_pred_baseline)
+print(f"\n✅ MSE (erro quadrático médio) - Regressão Linear (Linha de Base): {mse_baseline:.2f}")
+
+# Comparação de melhoria
+melhoria_percentual = ((mse_baseline - mse) / mse_baseline) * 100
+print(f"\n📈 A linha de base é {melhoria_percentual:.2f}% melhor que o modelo XGBoost.")
 
 # --------------------------
 # 7. Gerar CSV de resultado
