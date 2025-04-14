@@ -46,6 +46,30 @@ Execute o script principal para realizar a análise e gerar previsões:
 python main.py
 ```
 
+## Testes
+
+Para executar os testes automatizados do projeto, utilize o pytest:
+
+```bash
+# Executar todos os testes
+python -m pytest test/
+
+# Executar testes com detalhes
+python -m pytest test/ -v
+
+# Executar um arquivo de teste específico
+python -m pytest test/test_data_loader.py
+
+# Executar um teste específico
+python -m pytest test/test_data_loader.py::test_load_data
+```
+
+Certifique-se de que o pytest está instalado no ambiente virtual:
+
+```bash
+pip install pytest
+```
+
 ## Dados
 
 Os dados utilizados neste projeto são provenientes do conjunto de dados de emissões do Brasil, filtrados para incluir apenas o gás N2O.
