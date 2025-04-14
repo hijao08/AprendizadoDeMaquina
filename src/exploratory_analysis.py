@@ -8,6 +8,10 @@ class ExploratoryAnalysis:
         self.df = df
 
     def analyze(self):
+        # Criar diretório de saída se não existir
+        if not os.path.exists("./data/output/"):
+            os.makedirs("./data/output/")
+            
         print("\n📌 Dimensões do dataframe filtrado (apenas N2O):")
         print(self.df.shape)
         print("\n🧾 Primeiras linhas:")
@@ -90,7 +94,4 @@ class ExploratoryAnalysis:
         plt.title("Matriz de Correlação (variáveis numéricas)")
         plt.tight_layout()
         plt.savefig("data/output/correlacao_numerica.png")
-        plt.close()
-
-        if not os.path.exists("./data/output/"):
-            os.makedirs("./data/output/") 
+        plt.close() 

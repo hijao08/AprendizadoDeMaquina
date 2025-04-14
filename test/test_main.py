@@ -1,63 +1,119 @@
-import unittest
-from unittest.mock import MagicMock, patch
+import pytest
+from unittest.mock import patch, MagicMock
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
-from main import DataLoader, DataPreprocessor, ExploratoryAnalysis, ModelTrainer, ModelEvaluator
+from src.model_evaluator import ModelEvaluator
+import sys
+from src.model_trainer import ModelTrainer as NewModelTrainer
+from sklearn.linear_model import LinearRegression
+from xgboost import XGBRegressor
 
-class TestMain(unittest.TestCase):
-    @patch("main.DataLoader")
-    def test_data_loading(self, MockDataLoader):
-        # Mock the DataLoader
-        mock_loader = MockDataLoader.return_value
-        mock_loader.load_data.return_value = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
-        
-        data_loader = DataLoader("./data/input/br_seeg_emissoes_brasil.csv")
-        df = data_loader.load_data()
-        
-        mock_loader.load_data.assert_called_once()
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertEqual(df.shape, (2, 2))
+# Patch os imports dinâmicos no main.py para não importar DataLoader e outros
+sys.modules['src.main'] = MagicMock()
 
-    @patch("main.DataPreprocessor")
-    def test_data_preprocessing(self, MockDataPreprocessor):
-        # Mock the DataPreprocessor
-        mock_preprocessor = MockDataPreprocessor.return_value
-        mock_preprocessor.preprocess.return_value = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
-        
-        preprocessor = DataPreprocessor(pd.DataFrame({"col1": [1, 2], "col2": [3, 4]}))
-        df = preprocessor.preprocess()
-        
-        mock_preprocessor.preprocess.assert_called_once()
-        self.assertIsInstance(df, pd.DataFrame)
+@pytest.fixture
+def sample_data():
+    return pd.DataFrame({
+        "gas": ["N2O (t)", "CO2 (t)"], 
+        "emissao": [100, 200],
+        "other_column": ["abc", "def"]
+    })
 
-    @patch("main.ModelTrainer")
-    def test_model_training(self, MockModelTrainer):
-        # Mock the ModelTrainer
-        mock_trainer = MockModelTrainer.return_value
-        mock_trainer.train_xgboost.return_value = GradientBoostingRegressor()
-        mock_trainer.train_baseline.return_value = GradientBoostingRegressor()
-        
-        trainer = ModelTrainer(np.array([[1, 2], [3, 4]]), np.array([1, 2]))
-        xgb_model = trainer.train_xgboost()
-        baseline_model = trainer.train_baseline()
-        
-        mock_trainer.train_xgboost.assert_called_once()
-        mock_trainer.train_baseline.assert_called_once()
-        self.assertIsInstance(xgb_model, GradientBoostingRegressor)
-        self.assertIsInstance(baseline_model, GradientBoostingRegressor)
+@pytest.fixture
+def model_trainer():
+    X_train = np.array([[1, 2], [3, 4]])
+    y_train = np.array([1, 2])
+    return NewModelTrainer(X_train, y_train)
 
-    @patch("main.ModelEvaluator")
-    def test_model_evaluation(self, MockModelEvaluator):
-        # Mock the ModelEvaluator
-        mock_evaluator = MockModelEvaluator.return_value
-        mock_evaluator.evaluate.return_value = 0.5
-        
-        evaluator = ModelEvaluator(np.array([[1, 2], [3, 4]]), np.array([1, 2]))
-        mse = evaluator.evaluate(GradientBoostingRegressor(), "XGBoost")
-        
-        mock_evaluator.evaluate.assert_called_once()
-        self.assertEqual(mse, 0.5)
+@patch("pandas.read_csv")
+def test_data_loading(mock_read_csv, sample_data):
+    from src.data_loader import DataLoader
+    # Mock o pandas.read_csv
+    mock_read_csv.return_value = sample_data
+    
+    data_loader = DataLoader("./data/input/br_seeg_emissoes_brasil.csv")
+    df = data_loader.load_data()
+    
+    # Verificar que read_csv foi chamado
+    mock_read_csv.assert_called_once()
+    
+    # Outros testes específicos para o DataLoader
+    assert "gas" not in df.columns
+    assert "emissao" in df.columns
+    assert df.shape[0] == 1  # Apenas a linha com N2O
 
-if __name__ == "__main__":
-    unittest.main()
+def test_data_preprocessing():
+    from src.data_preprocessor import DataPreprocessor
+    test_df = pd.DataFrame({
+        "gas": ["N2O (t)", "CO2 (t)"],
+        "emissao": [100, None],
+        "other_column": ["abc", None]
+    })
+    
+    preprocessor = DataPreprocessor(test_df)
+    result_df = preprocessor.preprocess()
+    
+    # Verificar que os valores nulos foram tratados
+    assert result_df["emissao"].isna().sum() == 0
+    
+    # Verificar que a codificação one-hot foi aplicada
+    assert len(result_df.columns) > len(test_df.columns)
+    assert "gas_N2O (t)" in result_df.columns or "gas_N2O_(t)" in result_df.columns
+
+@pytest.fixture
+def training_data():
+    X_train = [[1], [2], [3], [4]]
+    y_train = [1.5, 2.5, 3.5, 4.5]
+    return X_train, y_train
+
+@patch('src.model_trainer.GridSearchCV')
+def test_train_xgboost(mock_grid_search, training_data):
+    X_train, y_train = training_data
+    trainer = NewModelTrainer(X_train, y_train)
+
+    # Mock GridSearchCV behavior
+    mock_best_model = MagicMock(spec=XGBRegressor)
+    mock_grid_search.return_value.fit.return_value = None
+    mock_grid_search.return_value.best_estimator_ = mock_best_model
+
+    best_model = trainer.train_xgboost()
+
+    # Assertions
+    mock_grid_search.assert_called_once()
+    mock_grid_search.return_value.fit.assert_called_once_with(X_train, y_train)
+    assert best_model == mock_best_model
+
+@patch('src.model_trainer.LinearRegression')
+def test_train_baseline(mock_linear_regression, training_data):
+    X_train, y_train = training_data
+    trainer = NewModelTrainer(X_train, y_train)
+
+    # Mock LinearRegression behavior
+    mock_model = MagicMock(spec=LinearRegression)
+    mock_linear_regression.return_value = mock_model
+
+    baseline_model = trainer.train_baseline()
+
+    # Assertions
+    mock_linear_regression.assert_called_once()
+    mock_model.fit.assert_called_once_with(X_train, y_train)
+    assert baseline_model == mock_model
+
+def test_model_evaluation():
+    X_test = np.array([[1, 2], [3, 4]])
+    y_test = np.array([1.5, 2.5])
+    
+    # Criar um mock do modelo de regressão
+    mock_model = MagicMock()
+    mock_model.predict.return_value = np.array([1.6, 2.4])
+    
+    evaluator = ModelEvaluator(X_test, y_test)
+    mse = evaluator.evaluate(mock_model, "MockModel")
+    
+    # Verificar que predict foi chamado
+    mock_model.predict.assert_called_once_with(X_test)
+    
+    # Verificar que o MSE foi calculado corretamente
+    expected_mse = ((1.6 - 1.5)**2 + (2.4 - 2.5)**2) / 2
+    assert round(mse, 4) == round(expected_mse, 4)

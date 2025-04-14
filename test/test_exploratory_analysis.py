@@ -1,7 +1,9 @@
 import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
-from exploratory_analysis import ExploratoryAnalysis
+from src.exploratory_analysis import ExploratoryAnalysis
+from io import StringIO
+from src.data_loader import DataLoader
 
 @pytest.fixture
 def sample_dataframe():
@@ -13,9 +15,9 @@ def sample_dataframe():
     }
     return pd.DataFrame(data)
 
-@patch("exploratory_analysis.plt")
-@patch("exploratory_analysis.sns")
-@patch("os.makedirs")
+@patch("src.exploratory_analysis.plt")
+@patch("src.exploratory_analysis.sns")
+@patch("src.exploratory_analysis.os.makedirs")
 def test_analyze(mock_makedirs, mock_sns, mock_plt, sample_dataframe):
     """Testa o método analyze da classe ExploratoryAnalysis."""
     # Mock para evitar criação de arquivos
