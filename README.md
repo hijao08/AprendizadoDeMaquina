@@ -43,7 +43,7 @@ deactivate
 Execute o script principal para realizar a análise e gerar previsões:
 
 ```bash
-python main.py
+python src/main.py
 ```
 
 ## Testes
