@@ -4,14 +4,27 @@ class DataPreprocessor:
     def __init__(self, df):
         self.df = df
 
-    def preprocess(self):
+    def preprocess(self, df_externo=None):
+        """
+        Aplica o preprocessamento nos dados.
+        
+        Args:
+            df_externo: DataFrame externo opcional para aplicar o mesmo preprocessamento
+                        utilizado no DataFrame original
+                        
+        Returns:
+            DataFrame preprocessado
+        """
+        # Utiliza o dataframe externo se fornecido, caso contrário usa o dataframe original
+        df = df_externo.copy() if df_externo is not None else self.df.copy()
+            
         # Tratamento de valores nulos
-        for col in self.df.columns:
-            if self.df[col].dtype == "object":
-                self.df[col] = self.df[col].fillna("desconhecido")
+        for col in df.columns:
+            if df[col].dtype == "object":
+                df[col] = df[col].fillna("desconhecido")
             else:
-                self.df[col] = self.df[col].fillna(0)
+                df[col] = df[col].fillna(0)
         
         # Codifica colunas categóricas com one-hot
-        self.df = pd.get_dummies(self.df)
-        return self.df 
+        df = pd.get_dummies(df)
+        return df 

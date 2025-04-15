@@ -8,7 +8,8 @@ Este projeto realiza uma análise das emissões de N2O no Brasil utilizando téc
 
 ## Estrutura do Projeto
 
-- `main.py`: Script principal que executa o fluxo de análise e previsão.
+- `src/main.py`: Script principal que executa o fluxo de análise e previsão.
+- `src/processar_teste.py`: Script para adicionar previsões a um arquivo de teste.
 - `data/input`: Contém os dados de entrada.
 - `data/output`: Armazena os resultados e gráficos gerados.
 
@@ -45,6 +46,24 @@ Execute o script principal para realizar a análise e gerar previsões:
 ```bash
 python src/main.py
 ```
+
+Para adicionar previsões a um arquivo de teste:
+
+```bash
+# Primeiro, execute o script principal para treinar o modelo
+python src/main.py
+
+# Depois, processe o arquivo de teste
+python src/processar_teste.py br_seeg_emissoes_brasil.csv
+```
+
+Após a execução, um novo arquivo será gerado na pasta `data/output` com o nome do arquivo original seguido de `_resultado.csv`, contendo as previsões do modelo.
+
+### Processamento de Arquivos de Teste
+
+O script `processar_teste.py` foi projetado para processar arquivos de teste fornecidos, adicionando previsões do modelo treinado. Ele possui as seguintes funcionalidades:
+
+**Previsão para N2O**: Para registros de N2O, utiliza o modelo XGBoost treinado com alta precisão.
 
 ## Testes
 
