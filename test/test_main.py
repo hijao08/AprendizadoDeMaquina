@@ -9,7 +9,6 @@ from src.model_trainer import ModelTrainer as NewModelTrainer
 from sklearn.linear_model import LinearRegression
 from xgboost import XGBRegressor
 
-# Patch os imports dinâmicos no main.py para não importar DataLoader e outros
 sys.modules['src.main'] = MagicMock()
 
 @pytest.fixture
@@ -29,19 +28,16 @@ def model_trainer():
 @patch("pandas.read_csv")
 def test_data_loading(mock_read_csv, sample_data):
     from src.data_loader import DataLoader
-    # Mock o pandas.read_csv
     mock_read_csv.return_value = sample_data
     
     data_loader = DataLoader("./data/input/br_seeg_emissoes_brasil.csv")
     df = data_loader.load_data()
     
-    # Verificar que read_csv foi chamado
     mock_read_csv.assert_called_once()
     
-    # Outros testes específicos para o DataLoader
     assert "gas" not in df.columns
     assert "emissao" in df.columns
-    assert df.shape[0] == 1  # Apenas a linha com N2O
+    assert df.shape[0] == 1 
 
 def test_data_preprocessing():
     from src.data_preprocessor import DataPreprocessor
@@ -54,10 +50,8 @@ def test_data_preprocessing():
     preprocessor = DataPreprocessor(test_df)
     result_df = preprocessor.preprocess()
     
-    # Verificar que os valores nulos foram tratados
     assert result_df["emissao"].isna().sum() == 0
     
-    # Verificar que a codificação one-hot foi aplicada
     assert len(result_df.columns) > len(test_df.columns)
     assert "gas_N2O (t)" in result_df.columns or "gas_N2O_(t)" in result_df.columns
 
@@ -72,14 +66,12 @@ def test_train_xgboost(mock_grid_search, training_data):
     X_train, y_train = training_data
     trainer = NewModelTrainer(X_train, y_train)
 
-    # Mock GridSearchCV behavior
     mock_best_model = MagicMock(spec=XGBRegressor)
     mock_grid_search.return_value.fit.return_value = None
     mock_grid_search.return_value.best_estimator_ = mock_best_model
 
     best_model = trainer.train_xgboost()
 
-    # Assertions
     mock_grid_search.assert_called_once()
     mock_grid_search.return_value.fit.assert_called_once_with(X_train, y_train)
     assert best_model == mock_best_model
@@ -89,13 +81,12 @@ def test_train_baseline(mock_linear_regression, training_data):
     X_train, y_train = training_data
     trainer = NewModelTrainer(X_train, y_train)
 
-    # Mock LinearRegression behavior
+    # Mock inearRegression behavior
     mock_model = MagicMock(spec=LinearRegression)
     mock_linear_regression.return_value = mock_model
 
     baseline_model = trainer.train_baseline()
 
-    # Assertions
     mock_linear_regression.assert_called_once()
     mock_model.fit.assert_called_once_with(X_train, y_train)
     assert baseline_model == mock_model
@@ -104,16 +95,13 @@ def test_model_evaluation():
     X_test = np.array([[1, 2], [3, 4]])
     y_test = np.array([1.5, 2.5])
     
-    # Criar um mock do modelo de regressão
     mock_model = MagicMock()
     mock_model.predict.return_value = np.array([1.6, 2.4])
     
     evaluator = ModelEvaluator(X_test, y_test)
     mse = evaluator.evaluate(mock_model, "MockModel")
     
-    # Verificar que predict foi chamado
     mock_model.predict.assert_called_once_with(X_test)
     
-    # Verificar que o MSE foi calculado corretamente
     expected_mse = ((1.6 - 1.5)**2 + (2.4 - 2.5)**2) / 2
     assert round(mse, 4) == round(expected_mse, 4)

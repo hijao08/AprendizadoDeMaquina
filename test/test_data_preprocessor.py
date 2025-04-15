@@ -27,23 +27,17 @@ def test_preprocess(sample_data, expected_data):
     preprocessor = DataPreprocessor(sample_data)
     result = preprocessor.preprocess()
     
-    # Verificar se todas as colunas esperadas estão presentes
     expected_columns = set(expected_data.columns)
     result_columns = set(result.columns)
     assert expected_columns.issubset(result_columns)
     
-    # Verificar os valores da coluna numérica principal
     assert (result["emissao"] == expected_data["emissao"]).all()
     
-    # Verificar valores categóricos one-hot encoding
     for col in expected_data.columns:
         if col != "emissao":
-            # Verifica se a coluna existe no resultado
             assert col in result.columns
             
-            # Convertendo para valores 0 e 1 para comparação
             result_values = result[col].astype(int).values
             expected_values = expected_data[col].values
             
-            # Verificar se os valores são equivalentes
             np.testing.assert_array_equal(result_values, expected_values)

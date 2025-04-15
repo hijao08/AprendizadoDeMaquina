@@ -1,0 +1,1 @@
+# Pacote de módulos para análise de emissões no Brasil 

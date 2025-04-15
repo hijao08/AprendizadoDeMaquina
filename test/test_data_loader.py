@@ -14,17 +14,14 @@ N2O (t),,jkl"""
     return pd.read_csv(StringIO(csv_data))
 
 def test_load_data(mock_csv_data):
-    # Usar diretamente o mock_csv_data como se fosse o resultado de read_csv
     with patch('pandas.read_csv', return_value=mock_csv_data):
         data_loader = DataLoader("caminho/ficticio.csv")
         result = data_loader.load_data()
         
-        # Verificar que o resultado tem as colunas corretas
         assert "gas" not in result.columns
         assert "emissao" in result.columns
         assert "other_column" in result.columns
         
-        # Verificar que apenas as linhas com N2O e valores válidos de emissão foram mantidas
-        assert len(result) == 2  # Apenas as primeiras duas linhas com N2O e emissão válida
+        assert len(result) == 2 
         assert 100.0 in result["emissao"].values
         assert 200.0 in result["emissao"].values
